@@ -3,12 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { Message } from "../../interfaces";
 import MenuItemButtons from "../../components/MenuItemButtons";
+import CartDrawer from "../../components/CartDrawer";
+import { useCart } from "../../components/CartContext";
 
 export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { totalItems } = useCart();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,7 +49,7 @@ export default function Home() {
     setInput("");
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/menu", {
+      const res = await axios.post("http://smartorder-backend.vercel.app/menu", {
         query: userMessage.content,
       });
       setLoading(false);
@@ -84,23 +88,39 @@ export default function Home() {
         style={{ height: "clamp(500px, 75vh, 700px)" }}
       >
         {/* Header */}
-        <div className="bg-orange-600 px-5 py-4 flex items-center gap-3 flex-shrink-0">
-          <div className="w-11 h-11 rounded-full bg-orange-800 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
-            🧑‍🍳
+        <div className="bg-orange-600 px-5 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-orange-800 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
+              🧑‍🍳
+            </div>
+            <div>
+              <p className="text-white font-bold text-base leading-tight">AI Waiter</p>
+              <p className="text-orange-200 text-xs flex items-center gap-1.5 mt-0.5">
+                <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse" />
+                Online & ready to serve
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-white font-bold text-base leading-tight">AI Waiter</p>
-            <p className="text-orange-200 text-xs flex items-center gap-1.5 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse" />
-              Online & ready to serve
-            </p>
-          </div>
+
+          {/* Cart Button */}
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative w-11 h-11 rounded-full bg-orange-500 flex items-center justify-center text-white hover:bg-orange-400 active:scale-95 transition-all shadow-md"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+            </svg>
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-600 text-[10px] font-extrabold rounded-full flex items-center justify-center shadow border-2 border-orange-600 animate-bounce">
+                {totalItems > 99 ? "99+" : totalItems}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-orange-50 scroll-smooth">
 
-          {/* Empty state */}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4">
               <span className="text-5xl">🍛</span>
@@ -120,20 +140,17 @@ export default function Home() {
             </div>
           )}
 
-          {/* Messages list */}
           {messages.map((msg, idx) => (
             <div
               key={idx}
               className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               <div className={`flex items-end gap-2 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-
                 {msg.role === "bot" && (
                   <div className="w-7 h-7 rounded-full bg-orange-600 flex items-center justify-center text-sm flex-shrink-0 shadow">
                     🧑‍🍳
                   </div>
                 )}
-
                 <div
                   className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm
                     ${msg.role === "user"
@@ -148,7 +165,7 @@ export default function Home() {
               {msg.role === "bot" && msg.items && msg.items.length > 0 && (
                 <div className="ml-9 mt-2">
                   <p className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-1.5">
-                    🛒 Add to cart
+                    🛒 Tap to add to cart
                   </p>
                   <MenuItemButtons
                     items={msg.items.map((item: { name: string }) => item.name)}
@@ -158,7 +175,6 @@ export default function Home() {
             </div>
           ))}
 
-          {/* Thinking dots */}
           {loading && (
             <div className="flex items-end gap-2">
               <div className="w-7 h-7 rounded-full bg-orange-600 flex items-center justify-center text-sm flex-shrink-0 shadow">
@@ -196,6 +212,9 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* Cart Drawer */}
+      {cartOpen && <CartDrawer onClose={() => setCartOpen(false)} />}
     </main>
   );
 }
