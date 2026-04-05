@@ -49,7 +49,7 @@ export default function Home() {
     setInput("");
     setLoading(true);
     try {
-      const res = await axios.post("http://smartorder-backend.vercel.app/menu", {
+      const res = await axios.post("https://smartorder-backend.vercel.app/menu", {
         query: userMessage.content,
       });
       setLoading(false);
