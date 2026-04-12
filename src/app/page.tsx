@@ -75,7 +75,7 @@ export default function Home() {
       {/* Brand */}
       <div className="mb-5 text-center">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight drop-shadow">
-          WAITER SINGH! <span className="text-orange-900">🍽️</span>
+          AI WAITER ! <span className="text-orange-900">🍽️</span>
         </h1>
         <p className="text-orange-100 text-xs mt-1.5 tracking-widest uppercase font-semibold">
           AI Waiter at your service !!
