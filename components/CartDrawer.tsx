@@ -3,21 +3,26 @@ import { useState } from "react";
 import axios from "axios";
 import { useCart } from "./CartContext";
 
+const BASE = "http://localhost:8000";
+
 export default function CartDrawer({ onClose }: { onClose: () => void }) {
   const { cart, addToCart, removeOne, removeAll, clearCart, totalItems } = useCart();
   const [ordering, setOrdering] = useState(false);
   const [ordered, setOrdered] = useState(false);
 
-  const totalPrice = null; // price not available on frontend, server handles it
-
   const handleOrder = async () => {
     if (cart.length === 0) return;
     setOrdering(true);
     try {
-      await axios.post("http://localhost:8000/order", { items: cart });
+      // Send id + quantity — backend resolves price and inserts rows
+      await axios.post(`${BASE}/order`, {
+        items: cart.map((i) => ({ id: i.id, name: i.name, quantity: i.quantity })),
+        restaurant_id: 1,   // hardcode or pull from context if multi-tenant
+        table_id: 1,        // hardcode or pass via URL param if tables are used
+      });
       setOrdered(true);
       clearCart();
-    } catch (err) {
+    } catch {
       alert("Failed to place order. Please try again.");
     } finally {
       setOrdering(false);
@@ -26,13 +31,8 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Drawer */}
       <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white z-50 shadow-2xl flex flex-col">
 
         {/* Header */}
@@ -76,7 +76,7 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
             <div className="space-y-3">
               {cart.map((item) => (
                 <div
-                  key={item.name}
+                  key={item.id}
                   className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 flex items-center justify-between gap-3"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -87,30 +87,19 @@ export default function CartDrawer({ onClose }: { onClose: () => void }) {
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* qty controls */}
                     <button
-                      onClick={() => removeOne(item.name)}
+                      onClick={() => removeOne(item.id)}
                       className="w-7 h-7 rounded-full bg-orange-100 text-orange-600 font-bold text-lg flex items-center justify-center hover:bg-orange-200 transition-colors leading-none"
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center text-gray-800 font-bold text-sm">
-                      {item.quantity}
-                    </span>
+                    >−</button>
+                    <span className="w-6 text-center text-gray-800 font-bold text-sm">{item.quantity}</span>
                     <button
-                      onClick={() => addToCart(item.name)}
+                      onClick={() => addToCart(item.id, item.name)}
                       className="w-7 h-7 rounded-full bg-orange-500 text-white font-bold text-lg flex items-center justify-center hover:bg-orange-600 transition-colors leading-none"
-                    >
-                      +
-                    </button>
-
-                    {/* remove */}
+                    >+</button>
                     <button
-                      onClick={() => removeAll(item.name)}
+                      onClick={() => removeAll(item.id)}
                       className="ml-1 w-7 h-7 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-xs hover:bg-red-100 transition-colors"
-                    >
-                      🗑️
-                    </button>
+                    >🗑️</button>
                   </div>
                 </div>
               ))}
